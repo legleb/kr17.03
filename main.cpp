@@ -4,7 +4,8 @@
 
 bool testEmptyVector()
 {
-  return false;
+  topit::Vector< int > v;
+  return v.isEmpty();
 }
 
 int main()
@@ -14,8 +15,12 @@ int main()
     { "Empty vector", testEmptyVector }
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
+  bool pass = true;
   for (size_t i = 0; i < count; ++i)
   {
-    std::cout << tests[i].first << ": " << tests[i].second() << "\n";
+    bool res = tests[i].second();
+    std::cout << tests[i].first << ": " << res << "\n";
+    pass = pass && res;
   }
+  std::cout << "RESULT: " << pass << "\n";
 }
