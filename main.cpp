@@ -8,11 +8,30 @@ bool testEmptyVector()
   return v.isEmpty();
 }
 
+bool testGetSize()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  return v.getSize() == 2;
+}
+
+bool testGetCapacity()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  return v.getCapacity() == 4;
+}
+
 int main()
 {
   using test_t = std::pair< const char *, bool(*)() >;
   test_t tests[] = {
-    { "Empty vector", testEmptyVector }
+    { "Empty vector", testEmptyVector },
+    { "Size of vector", testGetSize },
+    { "Capacity of vector", testGetCapacity}
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
   bool pass = true;
