@@ -61,6 +61,40 @@ bool testElementOutOfBoundAccess()
   }
 }
 
+bool testElementInboudConstAccess()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  const topit::Vector< int > & rv = v;
+  try
+  {
+    const int & val = rv.at(0);
+    return val == 1;
+  }
+  catch (...)
+  {
+    return false;
+  }
+}
+
+bool testElementOutOfBoundConstAccess()
+{
+  const topit::Vector< int > v;
+  try
+  {
+    v.at(0);
+    return false;
+  }
+  catch(const std::out_of_range &)
+  {
+    return true;
+  }
+  catch (...)
+  {
+    return false;
+  }
+}
+
 int main()
 {
   using test_t = std::pair< const char *, bool(*)() >;
@@ -69,7 +103,9 @@ int main()
     { "Size of vector", testGetSize },
     { "Capacity of vector", testGetCapacity },
     { "Inbound access", testElementInboudAccess },
-    { "Out of bound access", testElementOutOfBoundAccess }
+    { "Out of bound access", testElementOutOfBoundAccess },
+    { "Inbound const access", testElementInboudConstAccess },
+    { "Out of bound const access", testElementOutOfBoundConstAccess }
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
   bool pass = true;
