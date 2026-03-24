@@ -13,6 +13,8 @@ bool testGetSize()
   topit::Vector< int > v;
   v.pushBack(1);
   v.pushBack(2);
+  v.pushBack(3);
+  v.popBack();
   return v.getSize() == 2;
 }
 
