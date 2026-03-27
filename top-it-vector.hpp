@@ -6,7 +6,7 @@
 // Тестирование для копирования и перемещения
 // Написать по 2 штуки insert, erase и протестировать (ДЛЯ ДИАПАЗОНА ЗНАЧЕНИЙ) строгая гарантия
 
-// Домашка
+// Домашка (строгая гарантия)
 // Итераторы для вектора (произвольного доступа)
 // Придумать несколько insert/erase с итераторами (по 3 штуки) + тесты
 
@@ -217,6 +217,89 @@ void topit::Vector< T >::popBack()
   {
     --size_;
   }
+}
+
+template< class T >
+void topit::Vector< T >::insert(size_t i, const T& v)
+{
+  if (i > size_)
+  {
+    throw std::out_of_range("Index out of range")
+  }
+  size_t newCap = capacity_ * 2 + 1;
+  if (size_ + 1 < capacity_)
+  {
+    newCap = capacity_;
+  }
+  T* newData = new T[newCap];
+  try
+  {
+    size_t j = 0;
+    for (; j < i; ++j)
+    {
+      newData[j] = data_[j];
+    }
+    newData[i] = v;
+    for (; j < size_; ++j)
+    {
+      newData[j + 1] = data_[j];
+    }
+  }
+  catch (...)
+  {
+    delete[] newData;
+    throw;
+  }
+  delete[] data_;
+  data_ = newData;
+  size_++;
+  capacity_ = newCap;
+}
+
+template< class T >
+void topit::Vector< T >::insert(size_t i, const Vector< T >& rhs, size_t start, size_t end)
+{
+  if (i > size_)
+  {
+    throw std::out_of_range("Index out of range");
+  }
+  if (end >= rhs.getSize())
+  {
+    throw std::out_of_range("End of vector out of range");
+  }
+  size_t count = (end - start);
+  size_t newCap = capacity_ + count;
+  if (size_ + count < capacity_)
+  {
+    newCap = capacity_;
+  }
+  T* newData = new T[newCap];
+  try
+  {
+    size_t j = 0;
+    for (; j < i; ++j)
+    {
+      newData[j] = data_[j];
+    }
+    size_t k = 0;
+    for (; k < count ++k)
+    {
+      newData[j + k] = rhs.at(start + k);
+    }
+    for (; j < size_; ++j)
+    {
+      newData[j + k] = data_[j];
+    }
+  }
+  catch (...)
+  {
+    delete[] newData;
+    throw;
+  }
+  delete[] data_;
+  data_ = newData;
+  size_ += count;
+  capacity_ = newCap;
 }
 
 #endif
