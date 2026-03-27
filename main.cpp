@@ -117,6 +117,36 @@ bool testCopyConstructorForNonEmpty()
   }
 }
 
+bool testMoveConstructor()
+{
+  topit::Vector< int > v1(3, 9);
+  topit::Vector< int > v2(std::move(v1));
+  return v1.getSize() == 0 && v2.getSize() == 3;
+}
+
+bool testCopyAssignment()
+{
+  topit::Vector< int > v1(4, 2);
+  topit::Vector< int > v2(5, 5);
+  v2 = v1;
+  bool r = v2.getSize() == v1.getSize();
+  for (size_t i = 0; r && i < v1.getSize(); ++i)
+  {
+    r = r && v1[i] == v2[i];
+  }
+  v2.erase(1);
+  r = r && (v1.getSize() - v2.getSize() == 1);
+  return r;
+}
+
+bool testMoveAssignment()
+{
+  topit::Vector< int > v1(4, 2);
+  topit::Vector< int > v2(5, 5);
+  v2 = std::move(v1);
+  return v2.getSize() == 4 && v1.getSize() == 0;
+}
+
 int main()
 {
   using test_t = std::pair< const char *, bool(*)() >;
@@ -129,7 +159,10 @@ int main()
     { "Inbound const access", testElementInboudConstAccess },
     { "Out of bound const access", testElementOutOfBoundConstAccess },
     { "Copy empty vector", testCopyConstructorForEmpty },
-    { "Copy non-empty vector", testCopyConstructorForNonEmpty }
+    { "Copy non-empty vector", testCopyConstructorForNonEmpty },
+    { "Move constructor", testMoveConstructor },
+    { "Copy assignment", testCopyAssignment },
+    { "Move assignment", testMoveAssignment}
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
   bool pass = true;

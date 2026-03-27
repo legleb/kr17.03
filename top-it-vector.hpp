@@ -223,7 +223,7 @@ void topit::Vector< T >::insert(size_t i, const T& v)
 {
   if (i > size_)
   {
-    throw std::out_of_range("Index out of range")
+    throw std::out_of_range("Index out of range");
   }
   size_t newCap = capacity_ * 2 + 1;
   if (size_ + 1 < capacity_)
@@ -281,7 +281,7 @@ void topit::Vector< T >::insert(size_t i, const Vector< T >& rhs, size_t start, 
       newData[j] = data_[j];
     }
     size_t k = 0;
-    for (; k < count ++k)
+    for (; k < count; ++k)
     {
       newData[j + k] = rhs.at(start + k);
     }
