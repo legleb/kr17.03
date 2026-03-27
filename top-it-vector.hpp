@@ -36,12 +36,11 @@ namespace topit
 
     void pushBack(const T& v);
     void popBack();
+
     void insert(size_t i, const T& v);
+    void insert(size_t i, const Vector< T >& rhs, size_t start, size_t end);
     void erase(size_t i);
-
-    void insert(size_t i, const Vector< T >& rhs, size_t start, size_t end); // классная
-    void erase(size_t start, size_t end); // классная
-
+    void erase(size_t start, size_t end);
 
     template< class FwdIterator > // домашка
     void insert(VectorIterator pos, FwdIterator begin, FwdIterator end);
@@ -300,6 +299,75 @@ void topit::Vector< T >::insert(size_t i, const Vector< T >& rhs, size_t start, 
   data_ = newData;
   size_ += count;
   capacity_ = newCap;
+}
+
+template< class T >
+void topit::Vector< T >::erase(size_t i)
+{
+  if (i >= size_)
+  {
+    throw std::out_of_range("Index out of range");
+  }
+  T* v = new T[size_ - 1];
+  try
+  {
+    size_t j = 0;
+    for (; j < i; ++j)
+    {
+      v[j] = data_[j];
+    }
+    for (; j < size_; ++j)
+    {
+      v[j] = data_[j + 1];
+    }
+  }
+  catch (...)
+  {
+    delete[] v;
+    throw;
+  }
+  delete[] data_;
+  data_ = v;
+  size_--;
+}
+
+template< class T >
+void topit::Vector< T >::erase(size_t start, size_t end)
+{
+  if (start >= size_)
+  {
+    throw std::out_of_range("Start out of range");
+  }
+  size_t count = 0;
+  if (start + end >= size_)
+  {
+    count = size_ - start;
+  }
+  else
+  {
+    count = end - start;
+  }
+  T* v = new T[size_ - count];
+  try
+  {
+    size_t i = 0;
+    for (; i < start; ++i)
+    {
+      v[i] = data_[i];
+    }
+    for (; i < size_ - count; ++i)
+    {
+      v[i] = data_[i + count];
+    }
+  }
+  catch (...)
+  {
+    delete[] v;
+    throw;
+  }
+  delete[] data_;
+  data_ = v;
+  size_ -= count;
 }
 
 #endif
