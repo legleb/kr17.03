@@ -18,7 +18,7 @@ namespace topit
     ~Vector();
     Vector();
     Vector(const Vector< T >&);
-    Vector(Vector< T >&&);
+    Vector(Vector< T >&&) noexcept;
     Vector(size_t size, const T& init);
     Vector< T >& operator=(const Vector< T >&);
     Vector< T >& operator=(Vector< T >&&) noexcept;
@@ -42,8 +42,8 @@ namespace topit
     void erase(size_t i);
     void erase(size_t start, size_t end);
 
-    template< class FwdIterator > // домашка
-    void insert(VectorIterator pos, FwdIterator begin, FwdIterator end);
+    // template< class FwdIterator > // домашка
+    // void insert(VectorIterator pos, FwdIterator begin, FwdIterator end);
 
   private:
     T* data_;
@@ -83,6 +83,8 @@ topit::Vector< T >::Vector(Vector< T >&& rhs) noexcept:
   capacity_(rhs.capacity_)
 {
   rhs.data_ = nullptr;
+  rhs.size_ = 0;
+  rhs.capacity_ = 0;
 }
 
 template< class T >
@@ -334,30 +336,21 @@ void topit::Vector< T >::erase(size_t i)
 template< class T >
 void topit::Vector< T >::erase(size_t start, size_t end)
 {
-  if (start >= size_)
+  if (start >= size_ || end >= size_ || start >= end)
   {
     throw std::out_of_range("Start out of range");
   }
-  size_t count = 0;
-  if (start + end >= size_)
-  {
-    count = size_ - start;
-  }
-  else
-  {
-    count = end - start;
-  }
+  size_t count = end - start;
   T* v = new T[size_ - count];
   try
   {
-    size_t i = 0;
-    for (; i < start; ++i)
+    for (size_t i = 0; i < start; ++i)
     {
       v[i] = data_[i];
     }
-    for (; i < size_ - count; ++i)
+    for (size_t i = end; i < size_; ++i)
     {
-      v[i] = data_[i + count];
+      v[i - count] = data_[i];
     }
   }
   catch (...)
