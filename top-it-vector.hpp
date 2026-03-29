@@ -35,9 +35,14 @@ namespace topit
     void erase(size_t i);
     void erase(size_t start, size_t end);
 
-    void topit::Vector< T >::insert(CIter< T > it, const T& v);
-    void topit::Vector< T >::insert(CIter< T > it, T&& v);
-    void topit::Vector< T >::insert(CIter< T > i, CIter< T > start, CIter< T > end);
+    void insert(CIter< T > it, const T& v);
+    void insert(CIter< T > it, T&& v);
+    void insert(CIter< T > i, CIter< T > start, CIter< T > end);
+
+    CIter< T > erase(CIter< T > i);
+    CIter< T > erase(CIter< T > start, CIter< T > end);
+    template< class C >
+    CIter< T > erase(CIter< T > start, CIter< T > end, C c);
 
     CIter< T > cbegin();
     CIter< T > cend();
@@ -454,6 +459,62 @@ void topit::Vector< T >::insert(CIter< T > i, CIter< T > start, CIter< T > end)
   data_ = newData;
   size_ += count;
   capacity_ = newCap;
+}
+
+template< class T >
+topit::CIter< T > topit::Vector< T >::erase(CIter< T > i)
+{
+  if (i < CIter< T >(data_) || i >= CIter< T >(data_ + size_))
+  {
+    throw std::out_of_range("index is out of range in erase");
+  }
+  size_t c = i - cbegin();
+  erase(c);
+  return CIter< T >{data_ + c};
+}
+
+template< class T >
+topit::CIter< T > topit::Vector< T >::erase(CIter< T > start, CIter< T > end)
+{
+  if (start < CIter< T >(data_) || end > CIter< T >(data_ + size_) || start > end)
+  {
+    throw std::out_of_range("range out of range in erase");
+  }
+  size_t count = end - start;
+  size_t pos = start - cbegin();
+  erase(pos, count);
+  return CIter< T >{data_ + pos};
+}
+
+template< class T >
+template< class C >
+topit::CIter< T > topit::Vector< T >::erase(CIter< T > start, CIter< T > end, C c)
+{
+  if (start < CIter< T >(data_) || end > CIter< T >(data_ + size_) || start > end)
+  {
+    throw std::out_of_range("out of range in erase with predicate");
+  }
+  size_t startIndex = start - CIter< T >(data_);
+  size_t endIndex = end - CIter< T >(data_);
+  size_t count = endIndex - startIndex;
+  Vector< T > temp = Vector< T >(size_);
+  for (size_t i = 0; i < startIndex; ++i)
+  {
+    temp.pushBack(data_[i]);
+  }
+  for (size_t i = startIndex; i < endIndex; ++i)
+  {
+    if (!c(data_[i]))
+    {
+      temp.pushBack(data_[i]);
+    }
+  }
+  for (size_t i = endIndex; i < size_; ++i)
+  {
+    temp.pushBack(data_[i]);
+  }
+  swap(temp);
+  return CIter< T > {data_ + startIndex};
 }
 
 template< class T >
