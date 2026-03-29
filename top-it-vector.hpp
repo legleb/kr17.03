@@ -35,6 +35,10 @@ namespace topit
     void erase(size_t i);
     void erase(size_t start, size_t end);
 
+    void topit::Vector< T >::insert(CIter< T > it, const T& v);
+    void topit::Vector< T >::insert(CIter< T > it, T&& v);
+    void topit::Vector< T >::insert(CIter< T > i, CIter< T > start, CIter< T > end);
+
     CIter< T > cbegin();
     CIter< T > cend();
     Iter< T > begin();
@@ -381,6 +385,75 @@ template< class T >
 topit::Iter< T > topit::Vector< T >::end()
 {
   return Iter< T >(data_ + size_);
+}
+
+template< class T >
+void topit::Vector< T >::insert(CIter< T > it, const T& v)
+{
+  if (it < CIter< T >(data_) || it > CIter< T >(data_ + size_))
+  {
+    throw std::out_of_range("position out of range");
+  }
+  size_t pos = it - CIter< T >(data_);
+  generalInsert(pos, v);
+}
+
+template< class T >
+void topit::Vector< T >::insert(CIter< T > it, T&& v)
+{
+  if (it < CIter< T >(data_) || it > CIter< T >(data_ + size_))
+  {
+    throw std::out_of_range("position out of range");
+  }
+  size_t pos = it - CIter< T >(data_);
+  generalInsert(pos, std::move(v));
+}
+
+template< class T >
+void topit::Vector< T >::insert(CIter< T > i, CIter< T > start, CIter< T > end)
+{
+  if (i < CIter< T >(data_) || i > CIter< T >(data_ + size_))
+  {
+    throw std::out_of_range("iterator index is out of range");
+  }
+
+  size_t index = i - CIter< T >(data_);
+  size_t count = end - start;
+  if (!count)
+  {
+    return;
+  }
+  size_t newCap = capacity_;
+  if (size_ + count > capacity_)
+  {
+    newCap = capacity_ * 2 + count;
+  }
+  T* newData = new T[newCap];
+  try
+  {
+    size_t j = 0;
+    for (; j < index; ++j)
+    {
+      newData[j] = data_[j];
+    }
+    for (auto it = start; it != end; ++it)
+    {
+      newData[j++] = *it;
+    }
+    for (size_t k = index; k < size_; ++k)
+    {
+      newData[j++] = data_[k];
+    }
+  }
+  catch (...)
+  {
+    delete[] newData;
+    throw;
+  }
+  delete[] data_;
+  data_ = newData;
+  size_ += count;
+  capacity_ = newCap;
 }
 
 template< class T >
