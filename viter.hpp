@@ -1,7 +1,7 @@
 #ifndef TOP_IT_ITERS_HPP
 #define TOP_IT_ITERS_HPP
 #include <cstddef>
-namespace sedov
+namespace topit
 {
 
   template< class T >
@@ -58,95 +58,95 @@ namespace sedov
 }
 
 template< class T >
-const T& sedov::CIter< T >::operator*() const noexcept
+const T& topit::CIter< T >::operator*() const noexcept
 {
   return *ptr_;
 }
 
 template< class T >
-sedov::CIter< T >& sedov::CIter< T >::operator++() noexcept
+topit::CIter< T >& topit::CIter< T >::operator++() noexcept
 {
   ++ptr_;
   return *this;
 }
 
 template< class T >
-sedov::CIter< T >& sedov::CIter< T >::operator--() noexcept
+topit::CIter< T >& topit::CIter< T >::operator--() noexcept
 {
   --ptr_;
   return *this;
 }
 
 template< class T >
-sedov::CIter< T >& sedov::CIter< T >::operator+=(size_t n) noexcept
+topit::CIter< T >& topit::CIter< T >::operator+=(size_t n) noexcept
 {
   ptr_ += n;
   return *this;
 }
 
 template< class T >
-sedov::CIter< T >& sedov::CIter< T >::operator-=(size_t n) noexcept
+topit::CIter< T >& topit::CIter< T >::operator-=(size_t n) noexcept
 {
   ptr_ -= n;
   return *this;
 }
 
 template< class T >
-sedov::CIter< T > sedov::CIter< T >::operator+(size_t n) const noexcept
+topit::CIter< T > topit::CIter< T >::operator+(size_t n) const noexcept
 {
   return CIter< T >{ptr_ + n};
 }
 
 template< class T >
-sedov::CIter< T > sedov::CIter< T >::operator-(size_t n) const noexcept
+topit::CIter< T > topit::CIter< T >::operator-(size_t n) const noexcept
 {
   return CIter< T >{ptr_ - n};
 }
 
 template< class T >
-std::ptrdiff_t sedov::CIter< T >::operator-(const CIter& rhs) const noexcept
+std::ptrdiff_t topit::CIter< T >::operator-(const CIter& rhs) const noexcept
 {
   return this->ptr_ - rhs.ptr_;
 }
 
 template< class T >
-bool sedov::CIter< T >::operator==(const CIter& rhs) const noexcept
+bool topit::CIter< T >::operator==(const CIter& rhs) const noexcept
 {
   return this->ptr_ == rhs.ptr_;
 }
 
 template< class T >
-bool sedov::CIter< T >::operator!=(const CIter& rhs) const noexcept
+bool topit::CIter< T >::operator!=(const CIter& rhs) const noexcept
 {
   return !(*this == rhs);
 }
 
 template< class T >
-bool sedov::CIter< T >::operator>(const CIter& rhs) const noexcept
+bool topit::CIter< T >::operator>(const CIter& rhs) const noexcept
 {
   return this->ptr_ > rhs.ptr_;
 }
 
 template< class T >
-bool sedov::CIter< T >::operator>=(const CIter& rhs) const noexcept
+bool topit::CIter< T >::operator>=(const CIter& rhs) const noexcept
 {
   return this->ptr_ >= rhs.ptr_;
 }
 
 template< class T >
-bool sedov::CIter< T >::operator<(const CIter& rhs) const noexcept
+bool topit::CIter< T >::operator<(const CIter& rhs) const noexcept
 {
   return this->ptr_ < rhs.ptr_;
 }
 
 template< class T >
-bool sedov::CIter< T >::operator<=(const CIter& rhs) const noexcept
+bool topit::CIter< T >::operator<=(const CIter& rhs) const noexcept
 {
   return this->ptr_ <= rhs.ptr_;
 }
 
 template< class T >
-sedov::CIter< T > sedov::CIter< T >::operator++(int) noexcept
+topit::CIter< T > topit::CIter< T >::operator++(int) noexcept
 {
   CIter iter{ptr_};
   ++ptr_;
@@ -154,7 +154,7 @@ sedov::CIter< T > sedov::CIter< T >::operator++(int) noexcept
 }
 
 template< class T >
-sedov::CIter< T > sedov::CIter< T >::operator--(int) noexcept
+topit::CIter< T > topit::CIter< T >::operator--(int) noexcept
 {
   CIter iter{ptr_};
   --ptr_;
@@ -162,20 +162,20 @@ sedov::CIter< T > sedov::CIter< T >::operator--(int) noexcept
 }
 
 template< class T >
-T& sedov::Iter< T >::operator*() const noexcept
+T& topit::Iter< T >::operator*() const noexcept
 {
   return *ptr_;
 }
 
 template< class T >
-sedov::Iter< T >& sedov::Iter< T >::operator++() noexcept
+topit::Iter< T >& topit::Iter< T >::operator++() noexcept
 {
   ++ptr_;
   return *this;
 }
 
 template< class T >
-sedov::Iter< T > sedov::Iter< T >::operator++(int) noexcept
+topit::Iter< T > topit::Iter< T >::operator++(int) noexcept
 {
   Iter it{ptr_};
   ++ptr_;
@@ -183,14 +183,14 @@ sedov::Iter< T > sedov::Iter< T >::operator++(int) noexcept
 }
 
 template< class T >
-sedov::Iter< T >& sedov::Iter< T >::operator--() noexcept
+topit::Iter< T >& topit::Iter< T >::operator--() noexcept
 {
   --ptr_;
   return *this;
 }
 
 template< class T >
-sedov::Iter< T > sedov::Iter< T >::operator--(int) noexcept
+topit::Iter< T > topit::Iter< T >::operator--(int) noexcept
 {
   Iter it{ptr_};
   --ptr_;
@@ -198,69 +198,69 @@ sedov::Iter< T > sedov::Iter< T >::operator--(int) noexcept
 }
 
 template< class T >
-sedov::Iter< T >& sedov::Iter< T >::operator+=(size_t n) noexcept
+topit::Iter< T >& topit::Iter< T >::operator+=(size_t n) noexcept
 {
   ptr_ += n;
   return *this;
 }
 
 template< class T >
-sedov::Iter< T >& sedov::Iter< T >::operator-=(size_t n) noexcept
+topit::Iter< T >& topit::Iter< T >::operator-=(size_t n) noexcept
 {
   ptr_ -= n;
   return *this;
 }
 
 template< class T >
-sedov::Iter< T > sedov::Iter< T >::operator+(size_t n) const noexcept
+topit::Iter< T > topit::Iter< T >::operator+(size_t n) const noexcept
 {
   return Iter{ptr_ + n};
 }
 
 template< class T >
-sedov::Iter< T > sedov::Iter< T >::operator-(size_t n) const noexcept
+topit::Iter< T > topit::Iter< T >::operator-(size_t n) const noexcept
 {
   return Iter{ptr_ - n};
 }
 
 template< class T >
-std::ptrdiff_t sedov::Iter< T >::operator-(const Iter& rhs) const noexcept
+std::ptrdiff_t topit::Iter< T >::operator-(const Iter& rhs) const noexcept
 {
   return ptr_ - rhs.ptr_;
 }
 
 template< class T >
-bool sedov::Iter< T >::operator==(const Iter& rhs) const noexcept
+bool topit::Iter< T >::operator==(const Iter& rhs) const noexcept
 {
   return ptr_ == rhs.ptr_;
 }
 
 template< class T >
-bool sedov::Iter< T >::operator!=(const Iter& rhs) const noexcept
+bool topit::Iter< T >::operator!=(const Iter& rhs) const noexcept
 {
   return !(*this == rhs);
 }
 
 template< class T >
-bool sedov::Iter< T >::operator>(const Iter& rhs) const noexcept
+bool topit::Iter< T >::operator>(const Iter& rhs) const noexcept
 {
   return ptr_ > rhs.ptr_;
 }
 
 template< class T >
-bool sedov::Iter< T >::operator>=(const Iter& rhs) const noexcept
+bool topit::Iter< T >::operator>=(const Iter& rhs) const noexcept
 {
   return ptr_ >= rhs.ptr_;
 }
 
 template< class T >
-bool sedov::Iter< T >::operator<(const Iter& rhs) const noexcept
+bool topit::Iter< T >::operator<(const Iter& rhs) const noexcept
 {
   return ptr_ < rhs.ptr_;
 }
 
 template< class T >
-bool sedov::Iter< T >::operator<=(const Iter& rhs) const noexcept
+bool topit::Iter< T >::operator<=(const Iter& rhs) const noexcept
 {
   return ptr_ <= rhs.ptr_;
 }

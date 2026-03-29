@@ -1,10 +1,7 @@
 #ifndef TOP_IT_VECTOR_HPP
 #define TOP_IT_VECTOR_HPP
 #include <cstddef>
-
-// Домашка (строгая гарантия)
-// Итераторы для вектора (произвольного доступа)
-// Придумать несколько insert/erase с итераторами (по 3 штуки) + тесты
+#include "viter.hpp"
 
 namespace topit
 {
@@ -38,14 +35,17 @@ namespace topit
     void erase(size_t i);
     void erase(size_t start, size_t end);
 
-    template< class FwdIterator > // домашка
-    void insert(VectorIterator pos, FwdIterator begin, FwdIterator end);
+    CIter< T > cbegin();
+    CIter< T > cend();
+    Iter< T > begin();
+    Iter< T > end();
 
   private:
     T* data_;
     size_t size_, capacity_;
-
     explicit Vector(size_t size);
+    template< class P >
+    void uniInsert(size_t pos, P&& value);
   };
   template< class T >
   bool operator==(const Vector< T >& lhs, const Vector< T > & rhs);
@@ -357,6 +357,68 @@ void topit::Vector< T >::erase(size_t start, size_t end)
   delete[] data_;
   data_ = v;
   size_ -= count;
+}
+
+template< class T >
+topit::CIter< T > topit::Vector< T >::cbegin()
+{
+  return CIter< T >(data_);
+}
+
+template< class T >
+topit::CIter< T > topit::Vector< T >::cend()
+{
+  return CIter< T >(data_ + size_);
+}
+
+template< class T >
+topit::Iter< T > topit::Vector< T >::begin()
+{
+  return Iter< T >(data_);
+}
+
+template< class T >
+topit::Iter< T > topit::Vector< T >::end()
+{
+  return Iter< T >(data_ + size_);
+}
+
+template< class T >
+template< class P >
+void topit::Vector< T >::uniInsert(size_t i, P&& v)
+{
+  if (i > size_)
+  {
+    throw std::out_of_range("Index is out of range");
+  }
+  size_t newCap = capacity_ * 2 + 1;
+  if (size_ + 1 < capacity_)
+  {
+    newCap = capacity_;
+  }
+  T* newData = new T[newCap];
+  try
+  {
+    size_t j = 0;
+    for (; j < i; ++j)
+    {
+      newData[j] = data_[j];
+    }
+    newData[i] = std::forward< P >(v);
+    for (; j < size_; ++j)
+    {
+      newData[j + 1] = data_[j];
+    }
+  }
+  catch (...)
+  {
+    delete[] newData;
+    throw;
+  }
+  delete[] data_;
+  data_ = newData;
+  size_++;
+  capacity_ = newCap;
 }
 
 #endif
