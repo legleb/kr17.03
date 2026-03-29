@@ -2,10 +2,6 @@
 #define TOP_IT_VECTOR_HPP
 #include <cstddef>
 
-// Классная
-// Тестирование для копирования и перемещения
-// Написать по 2 штуки insert, erase и протестировать (ДЛЯ ДИАПАЗОНА ЗНАЧЕНИЙ) строгая гарантия
-
 // Домашка (строгая гарантия)
 // Итераторы для вектора (произвольного доступа)
 // Придумать несколько insert/erase с итераторами (по 3 штуки) + тесты
@@ -42,8 +38,8 @@ namespace topit
     void erase(size_t i);
     void erase(size_t start, size_t end);
 
-    // template< class FwdIterator > // домашка
-    // void insert(VectorIterator pos, FwdIterator begin, FwdIterator end);
+    template< class FwdIterator > // домашка
+    void insert(VectorIterator pos, FwdIterator begin, FwdIterator end);
 
   private:
     T* data_;
