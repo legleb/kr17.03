@@ -243,6 +243,135 @@ bool testRangeErase()
   return r;
 }
 
+bool testMoveInsertWithIterator()
+{
+  topit::Vector< std::string > v;
+  v.pushBack("one");
+  v.pushBack("three");
+  v.insert(v.cbegin() + 1, std::move(std::string("two")));
+  bool r = v.getSize() == 3;
+  r = r && (v[0] == "one");
+  r = r && (v[1] == "two");
+  r = r && (v[2] == "three");
+  return r;
+}
+
+bool testInsertWithIterator()
+{
+  auto v = topit::Vector< int >();
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.pushBack(4);
+  v.pushBack(5);
+  auto it = v.cbegin() + 1;
+  v.insert(it, 8);
+  it = v.cbegin() + 3;
+  v.insert(it, 7);
+  it = v.cbegin() + 5;
+  v.insert(it, 12);
+  it = v.cbegin();
+  v.insert(it, 23);
+  it = v.cend();
+  v.insert(it, 8);
+  int c[] = {23, 1, 8, 2, 7, 3, 12, 4, 5, 8};
+  bool r = v.getSize() == 10;
+  for (size_t i = 0; r && i < v.getSize(); i++)
+  {
+    r = r && (v[i] == c[i]);
+  }
+  return r;
+}
+
+bool testRangeInsertWithIterator()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.pushBack(4);
+  v.pushBack(5);
+  topit::Vector< int > v2;
+  v2.pushBack(6);
+  v2.pushBack(7);
+  v2.pushBack(8);
+  v2.pushBack(9);
+  v2.pushBack(10);
+  auto start = v.cbegin() + 1;
+  auto end = v.cbegin() + 4;
+  v2.insert(v2.cbegin() + 2, start, end);
+  int c[] = {6, 7, 2, 3, 4, 8, 9, 10};
+  bool r = v2.getSize() == 8;
+  for (size_t i = 0; r && i < v.getSize(); i++)
+  {
+    r = r && (v2[i] == c[i]);
+  }
+  try
+  {
+    v2.insert(v2.cbegin() + 100, v.cbegin(), v.cend());
+    r = false;
+  }
+  catch (const std::out_of_range& e)
+  {}
+  return r;
+}
+
+bool testEraseIterator()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.pushBack(4);
+  auto it = v.cbegin() + 1;
+  auto ret = v.erase(it);
+  bool r = v.getSize() == 3;
+  r = r && (v.at(0) == 1);
+  r = r && (v.at(1) == 3);
+  r = r && (v.at(2) == 4);
+  r = r && (*ret == 3);
+  return r;
+}
+
+bool testRangeEraseWithIterator()
+{
+  topit::Vector< int > v;
+  for (int i = 1; i <= 5; ++i)
+  {
+    v.pushBack(i);
+  }
+  auto start = v.cbegin() + 1;
+  auto end = v.cbegin() + 3;
+  auto ret = v.erase(start, end);
+  bool r = v.getSize() == 3;
+  r = r && (v.at(0) == 1);
+  r = r && (v.at(1) == 4);
+  r = r && (v.at(2) == 5);
+  r = r && (*ret == 4);
+  return r;
+}
+
+bool even(int v)
+{
+  return v % 2 == 0;
+}
+
+bool testErasePredicate()
+{
+  topit::Vector< int > v;
+  for (int i = 1; i <= 5; ++i)
+  {
+    v.pushBack(i);
+  }
+  auto ret = v.erase(v.cbegin(), v.cend(), even);
+  bool r = v.getSize() == 3;
+  r = r && (v.at(0) == 1);
+  r = r && (v.at(1) == 3);
+  r = r && (v.at(2) == 5);
+  r = r && (ret == v.cbegin());
+  return r;
+}
+
 int main()
 {
   using test_t = std::pair< const char *, bool(*)() >;
@@ -262,7 +391,13 @@ int main()
     { "Insert", testInsert },
     { "Range insert", testRangeInsert },
     { "Erase", testErase },
-    { "Range erase", testRangeErase }
+    { "Range erase", testRangeErase },
+    { "Move insert with iterator", testMoveInsertWithIterator },
+    { "Insert with iterator", testInsertWithIterator },
+    { "Insert by range with iterator", testRangeInsertWithIterator },
+    { "Erase Iterator", testEraseIterator },
+    { "Erase Iterator Range", testRangeEraseWithIterator },
+    { "Erase Predicate", testErasePredicate }
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
   bool pass = true;
@@ -273,6 +408,4 @@ int main()
     pass = pass && res;
   }
   std::cout << "RESULT: " << pass << "\n";
-  // Подсчёт кол-ва пройденных / непройденных тестов
-  // Выводить только непрошедшие тесты
 }
