@@ -226,7 +226,7 @@ bool testRangeErase()
   v.pushBack(4);
   v.pushBack(5);
   v.pushBack(6);
-  v.erase(2, 5);
+  v.erase(2, 3);
   int c[] = {1, 2, 6};
   bool r = v.getSize() == 3;
   for (size_t i = 0; i < v.getSize(); ++i)
@@ -245,14 +245,14 @@ bool testRangeErase()
 
 bool testMoveInsertWithIterator()
 {
-  topit::Vector< std::string > v;
-  v.pushBack("one");
-  v.pushBack("three");
-  v.insert(v.cbegin() + 1, std::move(std::string("two")));
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(3);
+  v.insert(v.cbegin() + 1, std::move(2));
   bool r = v.getSize() == 3;
-  r = r && (v[0] == "one");
-  r = r && (v[1] == "two");
-  r = r && (v[2] == "three");
+  r = r && (v[0] == 1);
+  r = r && (v[1] == 2);
+  r = r && (v[2] == 3);
   return r;
 }
 
@@ -372,6 +372,12 @@ bool testErasePredicate()
   return r;
 }
 
+bool testInitializerList()
+{
+  topit::Vector< int > v{1, 2};
+  return v.getSize() == 2 && (v[0] == 1) && (v[1] == 2);
+}
+
 int main()
 {
   using test_t = std::pair< const char *, bool(*)() >;
@@ -397,9 +403,11 @@ int main()
     { "Insert by range with iterator", testRangeInsertWithIterator },
     { "Erase Iterator", testEraseIterator },
     { "Erase Iterator Range", testRangeEraseWithIterator },
-    { "Erase Predicate", testErasePredicate }
+    { "Erase Predicate", testErasePredicate },
+    { "Non-empty vector for non-empty initializer list", testInitializerList }
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
+  std::cout << std::boolalpha;
   bool pass = true;
   for (size_t i = 0; i < count; ++i)
   {

@@ -1,6 +1,7 @@
 #ifndef TOP_IT_VECTOR_HPP
 #define TOP_IT_VECTOR_HPP
 #include <cstddef>
+#include <initializer_list>
 #include "viter.hpp"
 
 namespace topit
@@ -13,6 +14,7 @@ namespace topit
     Vector(const Vector< T >&);
     Vector(Vector< T >&&) noexcept;
     Vector(size_t size, const T& init);
+    explicit Vector(std::initializer_list< T > il);
     Vector< T >& operator=(const Vector< T >&);
     Vector< T >& operator=(Vector< T >&&) noexcept;
 
@@ -33,7 +35,7 @@ namespace topit
     void insert(size_t i, const T& v);
     void insert(size_t i, const Vector< T >& rhs, size_t start, size_t end);
     void erase(size_t i);
-    void erase(size_t start, size_t end);
+    void erase(size_t start, size_t count);
 
     void insert(CIter< T > it, const T& v);
     void insert(CIter< T > it, T&& v);
@@ -49,6 +51,17 @@ namespace topit
     Iter< T > begin();
     Iter< T > end();
 
+    // Классная работа 30.03.2026
+    void reserve(size_t required);
+    void shrinkToFit();
+    void pushBackCount(size_t k, const T& v);
+    template< class IT >
+    void pushBackRange(IT b, size_t c);
+    private: void unsafePushBack(const T&);
+
+    // Домашка 30.03.2026
+    // Избавиться от требования конструктора по умолчанию к типа T
+
   private:
     T* data_;
     size_t size_, capacity_;
@@ -58,6 +71,17 @@ namespace topit
   };
   template< class T >
   bool operator==(const Vector< T >& lhs, const Vector< T > & rhs);
+}
+
+template< class T >
+topit::Vector< T >::Vector(std::initializer_list< T > il):
+  Vector(il.size())
+{
+  size_t i = 0;
+  for (auto it = il.begin(); it != il.end(); ++it)
+  {
+    data_[i++] = *it;
+  }
 }
 
 template< class T >
@@ -79,6 +103,7 @@ topit::Vector< T >::Vector(const Vector< T > & rhs):
   {
     data_[i] = rhs[i];
   }
+  size_ = rhs.getSize();
 }
 
 template< class T >
@@ -107,6 +132,7 @@ topit::Vector< T >::Vector(size_t size, const T& init):
   {
     data_[i] = init;
   }
+  size_ = size;
 }
 
 template< class T >
@@ -339,23 +365,32 @@ void topit::Vector< T >::erase(size_t i)
 }
 
 template< class T >
-void topit::Vector< T >::erase(size_t start, size_t end)
+void topit::Vector< T >::erase(size_t start, size_t count)
 {
-  if (start >= size_ || end >= size_ || start >= end)
+  if (start >= size_)
   {
     throw std::out_of_range("Start out of range");
   }
-  size_t count = end - start;
+  if (start == size_ - 1)
+  {
+    popBack();
+    return;
+  }
+  if (start + count >= size_)
+  {
+    count = size_ - start;
+  }
   T* v = new T[size_ - count];
   try
   {
-    for (size_t i = 0; i < start; ++i)
+    size_t i = 0;
+    for (; i < start; ++i)
     {
       v[i] = data_[i];
     }
-    for (size_t i = end; i < size_; ++i)
+    for (; i < size_ - count; ++i)
     {
-      v[i - count] = data_[i];
+      v[i] = data_[i + count];
     }
   }
   catch (...)
@@ -400,7 +435,7 @@ void topit::Vector< T >::insert(CIter< T > it, const T& v)
     throw std::out_of_range("position out of range");
   }
   size_t pos = it - CIter< T >(data_);
-  generalInsert(pos, v);
+  uniInsert(pos, v);
 }
 
 template< class T >
@@ -411,7 +446,7 @@ void topit::Vector< T >::insert(CIter< T > it, T&& v)
     throw std::out_of_range("position out of range");
   }
   size_t pos = it - CIter< T >(data_);
-  generalInsert(pos, std::move(v));
+  uniInsert(pos, std::move(v));
 }
 
 template< class T >
@@ -497,7 +532,7 @@ topit::CIter< T > topit::Vector< T >::erase(CIter< T > start, CIter< T > end, C 
   size_t startIndex = start - CIter< T >(data_);
   size_t endIndex = end - CIter< T >(data_);
   size_t count = endIndex - startIndex;
-  Vector< T > temp = Vector< T >(size_);
+  Vector< T > temp;
   for (size_t i = 0; i < startIndex; ++i)
   {
     temp.pushBack(data_[i]);
@@ -554,5 +589,7 @@ void topit::Vector< T >::uniInsert(size_t i, P&& v)
   size_++;
   capacity_ = newCap;
 }
+
+
 
 #endif
