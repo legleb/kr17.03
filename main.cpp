@@ -378,6 +378,150 @@ bool testInitializerList()
   return v.getSize() == 2 && (v[0] == 1) && (v[1] == 2);
 }
 
+bool testReserveEmpty()
+{
+  topit::Vector< int > v;
+  v.reserve(10);
+  bool res = (v.getCapacity() >= 10);
+  res = res && (v.getSize() == 0);
+  return res;
+}
+
+bool testReserveNoChange()
+{
+  topit::Vector< int > v{5, 2};
+  size_t old_cap = v.getCapacity();
+  v.reserve(2);
+  return v.getCapacity() == old_cap;
+}
+
+bool testReserveIncrease()
+{
+  topit::Vector< int > v{5, 2};
+  v.reserve(10);
+  bool res = (v.getCapacity() >= 10);
+  res = res && (v.getSize() == 2);
+  return res && v[0] == 5 && v[1] == 2;
+}
+
+bool testShrinkToFitNoChange()
+{
+  topit::Vector< int > v{2, 5};
+  v.shrinkToFit();
+  bool res = (v.getCapacity() == v.getSize());
+  res = res && (v.getSize() == 2);
+  return res;
+}
+
+bool testShrinkToFitReduce()
+{
+  topit::Vector< int > v{5, 2};
+  v.reserve(10);
+  v.shrinkToFit();
+  bool res = (v.getCapacity() >= 2);
+  res = res && (v.getSize() == 2);
+  res = res && (v[0] == 5 && v[1] == 2);
+  return res;
+}
+
+bool testShrinkToFitEmpty()
+{
+  topit::Vector< int > v;
+  v.shrinkToFit();
+  return v.isEmpty() && (v.getCapacity() == 0);
+}
+
+bool testPushBackCountZero()
+{
+  topit::Vector< int > v{3, 5};
+  v.pushBackCount(0, 99);
+  return v.getSize() == 2;
+}
+
+bool testPushBackCountSome()
+{
+  topit::Vector< int > v{3, 5};
+
+  v.pushBackCount(3, 2);
+  bool res = v.getSize() == 5;
+  res = res && (v[0] == 3 && v[1] == 5);
+  res = res && (v[2] == 2 && v[3] == 2 && v[4] == 2);
+  return res;
+}
+
+bool testPushBackCountGrow()
+{
+  topit::Vector< int > v{5, 2};
+  v.pushBackCount(10, 2);
+  bool res = (v.getSize() == 12);
+  res = res && (v.getCapacity() >= 12);
+  res = res && v[11] == 2;
+  return res;
+}
+
+bool testPushBackRangeZero()
+{
+  topit::Vector< int > v{3, 5};
+  int arr[] = {1, 2, 3};
+  v.pushBackRange(arr, 0);
+  return v.getSize() == 2;
+}
+
+bool testPushBackRangeFromArray()
+{
+  topit::Vector< int > v{3, 5};
+  int arr[] = {10, 20, 30};
+  v.pushBackRange(arr, 3);
+  bool res = (v.getSize() == 5);
+  res = res && (v[0] == 3 && v[1] == 5);
+  res = res && (v[2] == 10 && v[3] == 20 && v[4] == 30);
+  return res;
+}
+
+bool testPushBackRangeFromVector()
+{
+  topit::Vector< int > v{3, 5};
+  topit::Vector< int > src{10, 20};
+  v.pushBackRange(src.begin(), src.getSize());
+  bool res = (v.getSize() == 4);
+  res = res && (v[2] == 10 && v[3] == 20);
+  return res;
+}
+
+bool testPushBackRangeGrow()
+{
+  topit::Vector<int> v{2, 5};
+  int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  v.pushBackRange(arr, 10);
+  bool res = (v.getSize() == 12);
+  res = res && (v.getCapacity() >= 12);
+  res = res && (v[11] == 10);
+  return res;
+}
+
+bool testUnsafePushBackBasic()
+{
+  topit::Vector< int > v{3, 5};
+  v.reserve(5);
+  v.unsafePushBack(99);
+  bool res = (v.getSize() == 3);
+  res = res && (v[2] == 99);
+  return res;
+}
+
+bool testUnsafePushBackMultiple()
+{
+  topit::Vector< int > v{2, 5};
+  v.reserve(5);
+  v.unsafePushBack(1);
+  v.unsafePushBack(2);
+  v.unsafePushBack(3);
+  bool res = (v.getSize() == 5);
+  res = res && (v[0] == 2 && v[1] == 5);
+  res = res && (v[2] == 1 && v[3] == 2 && v[4] == 3);
+  return res;
+}
+
 int main()
 {
   using test_t = std::pair< const char *, bool(*)() >;
@@ -404,7 +548,22 @@ int main()
     { "Erase Iterator", testEraseIterator },
     { "Erase Iterator Range", testRangeEraseWithIterator },
     { "Erase Predicate", testErasePredicate },
-    { "Non-empty vector for non-empty initializer list", testInitializerList }
+    { "Non-empty vector for non-empty initializer list", testInitializerList },
+    { "Reserve empty", testReserveEmpty },
+    { "Reserve no change", testReserveNoChange },
+    { "Reserve increase", testReserveIncrease },
+    { "Shrink to fit no change", testShrinkToFitNoChange },
+    { "Shrink to fit reduce", testShrinkToFitReduce },
+    { "Shrink to fit empty", testShrinkToFitEmpty },
+    { "Push back count zero", testPushBackCountZero },
+    { "Push back count some", testPushBackCountSome },
+    { "Push back count grow", testPushBackCountGrow },
+    { "Push back range zero", testPushBackRangeZero },
+    { "Push back range from array", testPushBackRangeFromArray },
+    { "Push back range from vector", testPushBackRangeFromVector },
+    { "Push back range grow", testPushBackRangeGrow },
+    { "Unsafe push back basic", testUnsafePushBackBasic },
+    { "Unsafe push back multiple", testUnsafePushBackMultiple },
   };
   const size_t count = sizeof(tests) / sizeof(test_t);
   std::cout << std::boolalpha;
