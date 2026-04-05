@@ -37,6 +37,13 @@ namespace topit
     void erase(size_t i);
     void erase(size_t start, size_t count);
 
+    CIter< T > cbegin() const noexcept;
+    CIter< T > cend() const noexcept;
+    Iter< T > begin() noexcept;
+    Iter< T > end() noexcept;
+    CIter< T > begin() const noexcept;
+    CIter< T > end() const noexcept;
+
     void insert(CIter< T > it, const T& v);
     void insert(CIter< T > it, T&& v);
     void insert(CIter< T > i, CIter< T > start, CIter< T > end);
@@ -45,11 +52,6 @@ namespace topit
     CIter< T > erase(CIter< T > start, CIter< T > end);
     template< class C >
     CIter< T > erase(CIter< T > start, CIter< T > end, C c);
-
-    CIter< T > cbegin();
-    CIter< T > cend();
-    Iter< T > begin();
-    Iter< T > end();
 
     // Классная работа 30.03.2026
     void reserve(size_t required);
@@ -66,6 +68,7 @@ namespace topit
     T* data_;
     size_t size_, capacity_;
     explicit Vector(size_t size);
+    void grow(size_t newCap);
     template< class P >
     void uniInsert(size_t pos, P&& value);
   };
@@ -74,20 +77,14 @@ namespace topit
 }
 
 template< class T >
-topit::Vector< T >::Vector(std::initializer_list< T > il):
-  Vector(il.size())
-{
-  size_t i = 0;
-  for (auto it = il.begin(); it != il.end(); ++it)
-  {
-    data_[i++] = *it;
-  }
-}
-
-template< class T >
 topit::Vector< T >::~Vector()
 {
-  delete[] data_;
+  for (size_t i = 0; i < size_; ++i)
+  {
+    data_[i].~T();
+  }
+  size_ = 0;
+  operator delete(data_);
 }
 
 template< class T >
@@ -97,13 +94,14 @@ topit::Vector< T >::Vector():
 
 template< class T >
 topit::Vector< T >::Vector(const Vector< T > & rhs):
-  Vector(rhs.getSize())
+  Vector(rhs.getCapacity())
 {
-  for (size_t i = 0; i < rhs.getSize(); ++i)
+  size_t i = 0;
+  for (; i < rhs.getSize(); ++i)
   {
-    data_[i] = rhs[i];
+    new(&data_[i]) T(rhs.data_[i]);
   }
-  size_ = rhs.getSize();
+  size_ = rhs.size_;
 }
 
 template< class T >
@@ -119,7 +117,7 @@ topit::Vector< T >::Vector(Vector< T >&& rhs) noexcept:
 
 template< class T >
 topit::Vector< T >::Vector(size_t size):
-  data_(size ? new T[size] : nullptr),
+  data_(size ? static_cast< T* >(operator new(sizeof(T) * size)) : nullptr),
   size_(size),
   capacity_(size)
 {}
@@ -130,17 +128,21 @@ topit::Vector< T >::Vector(size_t size, const T& init):
 {
   for (size_t i = 0; i < size; ++i)
   {
-    data_[i] = init;
+    new(&data_[i]) T(init);
   }
   size_ = size;
 }
 
 template< class T >
-void topit::Vector< T >::swap(Vector< T >& rhs) noexcept
+topit::Vector< T >::Vector(std::initializer_list< T > il):
+  Vector(il.size())
 {
-  std::swap(data_, rhs.data_);
-  std::swap(size_, rhs.size_);
-  std::swap(capacity_, rhs.capacity_);
+  size_t i = 0;
+  for (auto it = il.begin(); it != il.end(); ++it)
+  {
+    new(&data_[i++]) T(*it);
+  }
+  size_ = il.size();
 }
 
 template< class T >
@@ -168,11 +170,11 @@ topit::Vector< T >& topit::Vector< T >::operator=(Vector< T >&& rhs) noexcept
 }
 
 template< class T >
-bool topit::operator==(const Vector< T >& lhs, const Vector< T > & rhs)
+void topit::Vector< T >::swap(Vector< T >& rhs) noexcept
 {
-  bool isEqual = lhs.getSize() == rhs.getSize();
-  for (size_t i = 0; (i < lhs.getSize()) && (isEqual = isEqual && lhs[i] == rhs[i]); ++i);
-  return isEqual;
+  std::swap(data_, rhs.data_);
+  std::swap(size_, rhs.size_);
+  std::swap(capacity_, rhs.capacity_);
 }
 
 template< class T >
@@ -196,8 +198,8 @@ size_t topit::Vector< T >::getCapacity() const noexcept
 template< class T >
 T& topit::Vector< T >::operator[](size_t id) noexcept
 {
-  const Vector< T > *cthis = this;
-  return const_cast< T & >((*cthis)[id]);
+  const Vector< T >* cthis = this;
+  return const_cast< T& >((*cthis)[id]);
 }
 
 template< class T >
@@ -223,23 +225,49 @@ const T& topit::Vector< T >::at(size_t id) const
   throw std::out_of_range("bad id");
 }
 
-template< class T >
-void topit::Vector< T >::pushBack(const T& v)
+template < class T >
+void topit::Vector< T >::grow(size_t newCap)
 {
-  if (size_ == capacity_)
+  T* newData = static_cast< T* >(operator new(sizeof(T) * newCap));
+  size_t c = 0;
+  try
   {
-    size_t newCap = capacity_ == 0 ? 1 : capacity_ * 2;
-    T* newData = new T[newCap];
     for (size_t i = 0; i < size_; ++i)
     {
-      newData[i] = data_[i];
+      new (&newData[i]) T(std::move(data_[i]));
+      ++c;
     }
-    delete data_;
+    for (size_t i = 0; i < size_; ++i)
+    {
+      data_[i].~T();
+    }
+    operator delete(data_);
     data_ = newData;
     capacity_ = newCap;
   }
-  data_[size_] = v;
-  ++size_;
+  catch(...)
+  {
+    for (size_t i = 0; i < c; ++i)
+    {
+      newData[i].~T();
+    }
+    operator delete(newData);
+    throw;
+  }
+}
+
+template< class T >
+void topit::Vector< T >::pushBack(const T& v)
+{
+  Vector< T > t = *this;
+  if (t.size_ == t.capacity_)
+  {
+    size_t newCap = (t.capacity_ == 0) ? 1 : t.capacity_ * 2;
+    t.grow(newCap);
+  }
+  new (&t.data_[t.size_]) T(v);
+  ++t.size_;
+  swap(t);
 }
 
 template< class T >
@@ -248,6 +276,7 @@ void topit::Vector< T >::popBack()
   if (size_)
   {
     --size_;
+    data_[size_].~T();
   }
 }
 
@@ -258,34 +287,7 @@ void topit::Vector< T >::insert(size_t i, const T& v)
   {
     throw std::out_of_range("Index out of range");
   }
-  size_t newCap = capacity_ * 2 + 1;
-  if (size_ + 1 < capacity_)
-  {
-    newCap = capacity_;
-  }
-  T* newData = new T[newCap];
-  try
-  {
-    size_t j = 0;
-    for (; j < i; ++j)
-    {
-      newData[j] = data_[j];
-    }
-    newData[i] = v;
-    for (; j < size_; ++j)
-    {
-      newData[j + 1] = data_[j];
-    }
-  }
-  catch (...)
-  {
-    delete[] newData;
-    throw;
-  }
-  delete[] data_;
-  data_ = newData;
-  size_++;
-  capacity_ = newCap;
+  uniInsert(i, v);
 }
 
 template< class T >
@@ -295,7 +297,7 @@ void topit::Vector< T >::insert(size_t i, const Vector< T >& rhs, size_t start, 
   {
     throw std::out_of_range("Index out of range");
   }
-  if (end >= rhs.getSize())
+  if (end > rhs.getSize())
   {
     throw std::out_of_range("End of vector out of range");
   }
@@ -305,30 +307,38 @@ void topit::Vector< T >::insert(size_t i, const Vector< T >& rhs, size_t start, 
   {
     newCap = capacity_;
   }
-  T* newData = new T[newCap];
+  T* newData = static_cast< T* >(operator new(sizeof(T) * newCap));
+  size_t j = 0;
+  size_t k = 0;
   try
   {
-    size_t j = 0;
     for (; j < i; ++j)
     {
-      newData[j] = data_[j];
+      new(&newData[j]) T(data_[j]);
     }
-    size_t k = 0;
     for (; k < count; ++k)
     {
-      newData[j + k] = rhs.at(start + k);
+      new(&newData[j + k]) T(rhs[start + k]);
     }
     for (; j < size_; ++j)
     {
-      newData[j + k] = data_[j];
+      new(&newData[j + k]) T(data_[j]);
     }
   }
   catch (...)
   {
-    delete[] newData;
+    for (size_t l = 0; l < j + k; ++l)
+    {
+      (&newData[l])->~T();
+    }
+    operator delete(newData);
     throw;
   }
-  delete[] data_;
+  for (j = 0; j < size_; ++j)
+  {
+    (&data_[j])->~T();
+  }
+  operator delete(data_);
   data_ = newData;
   size_ += count;
   capacity_ = newCap;
@@ -341,25 +351,37 @@ void topit::Vector< T >::erase(size_t i)
   {
     throw std::out_of_range("Index out of range");
   }
-  T* v = new T[size_ - 1];
+  if (i == size_ - 1)
+  {
+    popBack();
+    return;
+  }
+  T* v = static_cast< T* >(operator new(sizeof(T) * (size_ - 1)));
+  size_t j = 0;
   try
   {
-    size_t j = 0;
     for (; j < i; ++j)
     {
-      v[j] = data_[j];
+      new(&v[j]) T(data_[j]);
     }
-    for (; j < size_; ++j)
+    for (; j < size_ - 1; ++j)
     {
-      v[j] = data_[j + 1];
+      new(&v[j]) T(data_[j + 1]);
     }
   }
   catch (...)
   {
-    delete[] v;
+    for (size_t k = 0; k < j; ++k) {
+      (&v[k])->~T();
+    }
+    operator delete(v);
     throw;
   }
-  delete[] data_;
+  for (j = 0; j < size_; ++j)
+  {
+    (&data_[j])->~T();
+  }
+  operator delete(data_);
   data_ = v;
   size_--;
 }
@@ -380,51 +402,71 @@ void topit::Vector< T >::erase(size_t start, size_t count)
   {
     count = size_ - start;
   }
-  T* v = new T[size_ - count];
+  T* v = static_cast< T* >(operator new(sizeof(T) * (size_ - count)));
+  size_t i = 0;
   try
   {
-    size_t i = 0;
     for (; i < start; ++i)
     {
-      v[i] = data_[i];
+      new(&v[i]) T(data_[i]);
     }
     for (; i < size_ - count; ++i)
     {
-      v[i] = data_[i + count];
+      new(&v[i]) T(data_[i + count]);
     }
   }
   catch (...)
   {
-    delete[] v;
+    for (; i > 0; i--)
+    {
+      (&v[i - 1])->~T();
+    }
+    operator delete(v);
     throw;
   }
-  delete[] data_;
+  for (i = 0; i < size_; ++i)
+  {
+    (&data_[i])->~T();
+  }
+  operator delete(data_);
   data_ = v;
   size_ -= count;
 }
 
 template< class T >
-topit::CIter< T > topit::Vector< T >::cbegin()
+topit::CIter< T > topit::Vector< T >::cbegin() const noexcept
 {
   return CIter< T >(data_);
 }
 
 template< class T >
-topit::CIter< T > topit::Vector< T >::cend()
+topit::CIter< T > topit::Vector< T >::cend() const noexcept
 {
   return CIter< T >(data_ + size_);
 }
 
 template< class T >
-topit::Iter< T > topit::Vector< T >::begin()
+topit::Iter< T > topit::Vector< T >::begin() noexcept
 {
   return Iter< T >(data_);
 }
 
 template< class T >
-topit::Iter< T > topit::Vector< T >::end()
+topit::Iter< T > topit::Vector< T >::end() noexcept
 {
   return Iter< T >(data_ + size_);
+}
+
+template< class T >
+topit::CIter< T > topit::Vector< T >::begin() const noexcept
+{
+  return CIter< T >(data_);
+}
+
+template< class T >
+topit::CIter< T > topit::Vector< T >::end() const noexcept
+{
+  return CIter< T >(data_ + size_);
 }
 
 template< class T >
@@ -468,29 +510,37 @@ void topit::Vector< T >::insert(CIter< T > i, CIter< T > start, CIter< T > end)
   {
     newCap = capacity_ * 2 + count;
   }
-  T* newData = new T[newCap];
+  T* newData = static_cast< T* >(operator new(sizeof(T) * newCap));
+  size_t j = 0;
   try
   {
-    size_t j = 0;
     for (; j < index; ++j)
     {
-      newData[j] = data_[j];
+      new(&newData[j]) T(data_[j]);
     }
     for (auto it = start; it != end; ++it)
     {
-      newData[j++] = *it;
+      new(&newData[j++]) T(*it);
     }
     for (size_t k = index; k < size_; ++k)
     {
-      newData[j++] = data_[k];
+      new(&newData[j++]) T(data_[k]);
     }
   }
   catch (...)
   {
-    delete[] newData;
+    for (size_t k = 0; k < j; ++k)
+    {
+      (&newData[k])->~T();
+    }
+    operator delete(newData);
     throw;
   }
-  delete[] data_;
+  for (size_t j = 0; j < size_; ++j)
+  {
+    (&data_[j])->~T();
+  }
+  operator delete(data_);
   data_ = newData;
   size_ += count;
   capacity_ = newCap;
@@ -565,31 +615,45 @@ void topit::Vector< T >::uniInsert(size_t i, P&& v)
   {
     newCap = capacity_;
   }
-  T* newData = new T[newCap];
+  T* newData = static_cast< T* >(operator new(sizeof(T) * newCap));
+  size_t j = 0;
   try
   {
-    size_t j = 0;
     for (; j < i; ++j)
     {
-      newData[j] = data_[j];
+      new(&newData[j]) T(data_[j]);
     }
-    newData[i] = std::forward< P >(v);
+    new(&newData[i]) T(std::forward< P >(v));
     for (; j < size_; ++j)
     {
-      newData[j + 1] = data_[j];
+      new(&newData[j + 1]) T(data_[j]);
     }
   }
   catch (...)
   {
-    delete[] newData;
+    for (size_t k = 0; k < j; ++k)
+    {
+      (&newData[k])->~T();
+    }
+    operator delete(newData);
     throw;
   }
-  delete[] data_;
+  for (; j > 0; j--)
+  {
+    (&data_[j - 1])->~T();
+  }
+  operator delete(data_);
   data_ = newData;
   size_++;
   capacity_ = newCap;
 }
 
-
+template< class T >
+bool topit::operator==(const Vector< T >& lhs, const Vector< T > & rhs)
+{
+  bool isEqual = lhs.getSize() == rhs.getSize();
+  for (size_t i = 0; (i < lhs.getSize()) && (isEqual = isEqual && lhs[i] == rhs[i]); ++i);
+  return isEqual;
+}
 
 #endif
