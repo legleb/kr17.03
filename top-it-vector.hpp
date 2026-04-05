@@ -54,12 +54,12 @@ namespace topit
     CIter< T > erase(CIter< T > start, CIter< T > end, C c);
 
     // Классная работа 30.03.2026
-    void reserve(size_t required);
+    void reserve(size_t k);
     void shrinkToFit();
     void pushBackCount(size_t k, const T& v);
     template< class IT >
     void pushBackRange(IT b, size_t c);
-    private: void unsafePushBack(const T&);
+    void unsafePushBack(const T& v);
 
     // Домашка 30.03.2026
     // Избавиться от требования конструктора по умолчанию к типа T
@@ -600,6 +600,103 @@ topit::CIter< T > topit::Vector< T >::erase(CIter< T > start, CIter< T > end, C 
   }
   swap(temp);
   return CIter< T > {data_ + startIndex};
+}
+
+template< class T >
+void topit::Vector< T >::reserve(size_t k)
+{
+  if (k <= capacity_)
+  {
+    return;
+  }
+  Vector< T > t = *this;
+  t.grow(k);
+  swap(t);
+}
+
+template< class T >
+void topit::Vector< T >::shrinkToFit()
+{
+  if (size_ < capacity_)
+  {
+    T* newData = static_cast< T* >(operator new(sizeof(T) * size_));
+    size_t c = 0;
+    try
+    {
+      for (size_t i = 0; i < size_; ++i)
+      {
+        new (&newData[i]) T(std::move(data_[i]));
+        ++c;
+      }
+      for (size_t i = 0; i < size_; ++i)
+      {
+        data_[i].~T();
+      }
+      operator delete(data_);
+      data_ = newData;
+      capacity_ = size_;
+    }
+    catch(...)
+    {
+      for (size_t i = 0; i < c; ++i)
+      {
+        newData[i].~T();
+      }
+      operator delete(newData);
+      throw;
+    }
+  }
+}
+
+template< class T >
+void topit::Vector< T >::pushBackCount(size_t k, const T& v)
+{
+  if (!k)
+  {
+    return;
+  }
+  Vector< T > t = *this;
+  if (t.size_ + k > t.capacity_)
+  {
+    size_t newCap = (!t.capacity_) ? k : std::max(t.size_ + k, t.capacity_ * 2);
+    t.grow(newCap);
+  }
+  for (size_t i = 0; i < k; ++i)
+  {
+    new (&t.data_[t.size_ + i]) T(v);
+  }
+  t.size_ += k;
+  swap(t);
+}
+
+template< class T >
+template< class IT >
+void topit::Vector< T >::pushBackRange(IT b, size_t c)
+{
+  if (!c)
+  {
+    return;
+  }
+  Vector< T > t = *this;
+  if (t.size_ + c > t.capacity_)
+  {
+    size_t newCap = (t.capacity_ == 0) ? c : std::max(t.size_ + c, t.capacity_ * 2);
+    t.grow(newCap);
+  }
+  for (size_t i = 0; i < c; ++i)
+  {
+    new (&t.data_[t.size_ + i]) T(std::move(*b));
+    ++b;
+  }
+  t.size_ += c;
+  swap(t);
+}
+
+template< class T >
+void topit::Vector< T >::unsafePushBack(const T& value)
+{
+  new(&data_[size_]) T(value);
+  ++size_;
 }
 
 template< class T >
